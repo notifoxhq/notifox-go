@@ -5,12 +5,14 @@ Go SDK for Notifox.
 ## Installation
 
 ```bash
-go get github.com/notifox/notifox-go
+go get github.com/notifoxhq/notifox-go
 ```
 
 ## Usage
 
 ### Basic Usage
+
+The recommended way is to use the environment variable:
 
 ```go
 package main
@@ -18,11 +20,12 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/notifox/notifox-go"
+    "github.com/notifoxhq/notifox-go"
 )
 
 func main() {
-    client, err := notifox.NewClient("your_api_key_here")
+    // Reads from NOTIFOX_API_KEY environment variable
+    client, err := notifox.NewClientFromEnv()
     if err != nil {
         panic(err)
     }
@@ -37,7 +40,11 @@ func main() {
 }
 ```
 
-### Using Environment Variable
+**Note:** You can also use `notifox.NewClient("")` which is equivalent to `notifox.NewClientFromEnv()`.
+
+### Providing API Key Directly
+
+Alternatively, you can provide the API key directly:
 
 ```go
 package main
@@ -45,12 +52,11 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/notifox/notifox-go"
+    "github.com/notifoxhq/notifox-go"
 )
 
 func main() {
-    // Reads from NOTIFOX_API_KEY environment variable
-    client, err := notifox.NewClientFromEnv()
+    client, err := notifox.NewClient("your_api_key_here")
     if err != nil {
         panic(err)
     }
@@ -84,7 +90,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/notifox/notifox-go"
+    "github.com/notifoxhq/notifox-go"
 )
 
 func main() {

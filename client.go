@@ -64,9 +64,10 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 }
 
 // NewClient creates a new Notifox client with the provided API key.
+// If apiKey is empty, it will attempt to read from the NOTIFOX_API_KEY environment variable.
 func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 	if apiKey == "" {
-		return nil, fmt.Errorf("api key cannot be empty")
+		return nil, fmt.Errorf("api key is required (provide it directly or set %s environment variable)", EnvAPIKey)
 	}
 
 	client := &Client{
