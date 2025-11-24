@@ -1,5 +1,8 @@
 # Notifox Go Client
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/notifoxhq/notifox-go.svg)](https://pkg.go.dev/github.com/notifoxhq/notifox-go)
+[![CI](https://github.com/notifoxhq/notifox-go/actions/workflows/ci.yaml/badge.svg)](https://github.com/notifoxhq/notifox-go/actions/workflows/ci.yaml)
+
 Go SDK for Notifox.
 
 ## Installation
