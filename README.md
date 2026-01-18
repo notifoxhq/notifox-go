@@ -153,18 +153,18 @@ fmt.Printf("Parts: %d, Cost: $%.3f, Encoding: %s\n",
 Send alert with additional options:
 
 ```go
-// Send via SMS (explicit)
+// Send via SMS
 resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
     Audience: "admin",
     Alert:    "Critical system failure!",
-    Channel:  "sms",
+    Channel:  notifox.SMS,
 })
 
 // Send via Email
 resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
     Audience: "admin",
     Alert:    "Critical system failure!",
-    Channel:  "email",
+    Channel:  notifox.Email,
 })
 
 // Channel not specified
@@ -175,7 +175,6 @@ resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
 ```
 
 **Channel Options:**
-- `"sms"` - Send via SMS
-- `"email"` - Send via Email
+- `notifox.SMS` - Send via SMS
+- `notifox.Email` - Send via Email
 - Omit or leave empty - Channel will be blank in the request body
-

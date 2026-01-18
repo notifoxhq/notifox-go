@@ -115,8 +115,8 @@ func (c *Client) SendAlertWithOptions(ctx context.Context, req AlertRequest) (*A
 		return nil, fmt.Errorf("alert message cannot be empty")
 	}
 
-	// Validate channel is either empty, "sms", or "email"
-	if req.Channel != "" && req.Channel != "sms" && req.Channel != "email" {
+	// Validate channel is either empty, SMS, or Email
+	if req.Channel != "" && req.Channel != SMS && req.Channel != Email {
 		return nil, fmt.Errorf("channel must be either 'sms' or 'email'")
 	}
 
