@@ -114,9 +114,9 @@ func (c *Client) SendAlertWithOptions(ctx context.Context, req AlertRequest) (*A
 		return nil, fmt.Errorf("alert message cannot be empty")
 	}
 
-	// Default channel to "sms" if not specified
-	if req.Channel == "" {
-		req.Channel = "sms"
+	// Validate channel is either empty, "sms", or "email"
+	if req.Channel != "" && req.Channel != "sms" && req.Channel != "email" {
+		return nil, fmt.Errorf("channel must be either 'sms' or 'email'")
 	}
 
 	url := fmt.Sprintf("%s/alert", c.baseURL)

@@ -4,7 +4,7 @@ package notifox
 type AlertRequest struct {
 	Audience string `json:"audience"`
 	Alert    string `json:"alert"`
-	Channel  string `json:"channel,omitempty"`
+	Channel  string `json:"channel"`
 }
 
 // AlertResponse represents the response from sending an alert.
