@@ -97,7 +97,7 @@ func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
 	return NewClient(apiKey, opts...)
 }
 
-// SendAlert sends an SMS alert to a verified audience.
+// SendAlert sends an alert to a verified audience.
 func (c *Client) SendAlert(ctx context.Context, audience, alert string) (*AlertResponse, error) {
 	return c.SendAlertWithOptions(ctx, AlertRequest{
 		Audience: audience,
@@ -105,7 +105,8 @@ func (c *Client) SendAlert(ctx context.Context, audience, alert string) (*AlertR
 	})
 }
 
-// SendAlertWithOptions sends an SMS alert with additional options.
+// SendAlertWithOptions sends an alert with additional options.
+// The channel can be set to "sms" or "email".
 func (c *Client) SendAlertWithOptions(ctx context.Context, req AlertRequest) (*AlertResponse, error) {
 	if req.Audience == "" {
 		return nil, fmt.Errorf("audience cannot be empty")
