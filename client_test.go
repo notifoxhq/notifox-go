@@ -590,9 +590,9 @@ func TestDefaultChannel(t *testing.T) {
 		var req AlertRequest
 		json.NewDecoder(r.Body).Decode(&req)
 
-		// Channel should default to "sms" if not provided
-		if req.Channel != "sms" {
-			t.Errorf("expected default channel 'sms', got %s", req.Channel)
+		// Channel should be empty if not provided
+		if req.Channel != "" {
+			t.Errorf("expected empty channel when not specified, got %s", req.Channel)
 		}
 
 		w.WriteHeader(http.StatusOK)
@@ -616,7 +616,7 @@ func TestDefaultChannel(t *testing.T) {
 	_, err = client.SendAlertWithOptions(ctx, AlertRequest{
 		Audience: "test-user",
 		Alert:    "Test alert",
-		// Channel not set, should default to "sms"
+		// Channel not set, should be empty
 	})
 
 	if err != nil {
