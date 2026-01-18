@@ -1,10 +1,20 @@
 package notifox
 
+// Channel represents the delivery channel for an alert.
+type Channel string
+
+const (
+	// SMS represents SMS delivery channel.
+	SMS Channel = "sms"
+	// Email represents email delivery channel.
+	Email Channel = "email"
+)
+
 // AlertRequest represents a request to send an alert.
 type AlertRequest struct {
-	Audience string `json:"audience"`
-	Alert    string `json:"alert"`
-	Channel  string `json:"channel"`
+	Audience string  `json:"audience"`
+	Alert    string  `json:"alert"`
+	Channel  Channel `json:"channel"`
 }
 
 // AlertResponse represents the response from sending an alert.
