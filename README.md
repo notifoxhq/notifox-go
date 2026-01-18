@@ -153,28 +153,14 @@ fmt.Printf("Parts: %d, Cost: $%.3f, Encoding: %s\n",
 Send alert with additional options:
 
 ```go
-// Send via SMS using string literal
-resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
-    Audience: "admin",
-    Alert:    "Critical system failure!",
-    Channel:  "sms",
-})
-
-// Send via SMS using typed constant
+// Send via SMS
 resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
     Audience: "admin",
     Alert:    "Critical system failure!",
     Channel:  notifox.SMS,
 })
 
-// Send via Email using string literal
-resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
-    Audience: "admin",
-    Alert:    "Critical system failure!",
-    Channel:  "email",
-})
-
-// Send via Email using typed constant
+// Send via Email
 resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
     Audience: "admin",
     Alert:    "Critical system failure!",
@@ -189,8 +175,6 @@ resp, err := client.SendAlertWithOptions(ctx, notifox.AlertRequest{
 ```
 
 **Channel Options:**
-- `"sms"` or `notifox.SMS` - Send via SMS
-- `"email"` or `notifox.Email` - Send via Email
+- `notifox.SMS` - Send via SMS
+- `notifox.Email` - Send via Email
 - Omit or leave empty - Channel will be blank in the request body
-
-You can use either string literals (`"sms"`, `"email"`) or the typed constants (`notifox.SMS`, `notifox.Email`).
