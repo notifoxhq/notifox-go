@@ -41,6 +41,19 @@ func (e *NotifoxRateLimitError) Error() string {
 	return "rate limit exceeded"
 }
 
+// NotifoxInsufficientBalanceError represents insufficient balance errors (402).
+type NotifoxInsufficientBalanceError struct {
+	NotifoxError
+	ResponseText string
+}
+
+func (e *NotifoxInsufficientBalanceError) Error() string {
+	if e.ResponseText != "" {
+		return fmt.Sprintf("insufficient balance: %s", e.ResponseText)
+	}
+	return "insufficient balance"
+}
+
 // NotifoxAPIError represents general API errors.
 type NotifoxAPIError struct {
 	NotifoxError
@@ -81,7 +94,12 @@ func parseError(statusCode int, responseText string) error {
 			StatusCode:   statusCode,
 			ResponseText: responseText,
 		}
-	case http.StatusTooManyRequests:
+	case http.StatusPaymentRequired: // 402
+		return &NotifoxInsufficientBalanceError{
+			NotifoxError: NotifoxError{Message: "insufficient balance"},
+			ResponseText: responseText,
+		}
+	case http.StatusTooManyRequests: // 429
 		return &NotifoxRateLimitError{
 			NotifoxError: NotifoxError{Message: "rate limit exceeded"},
 			ResponseText: responseText,

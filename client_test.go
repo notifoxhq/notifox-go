@@ -206,7 +206,12 @@ func TestSendAlert(t *testing.T) {
 				}
 
 				w.WriteHeader(tt.statusCode)
-				json.NewEncoder(w).Encode(tt.responseBody)
+				// 401 returns plain text "Unauthorized", not JSON
+				if tt.statusCode == http.StatusUnauthorized {
+					w.Write([]byte("Unauthorized"))
+				} else {
+					json.NewEncoder(w).Encode(tt.responseBody)
+				}
 			}))
 			defer server.Close()
 
@@ -448,7 +453,8 @@ func TestNoRetryOnAuthError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		attempts++
 		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(ErrorResponse{Error: "Authentication failed"})
+		// 401 returns plain text, not JSON
+		w.Write([]byte("Unauthorized"))
 	}))
 	defer server.Close()
 
@@ -484,7 +490,7 @@ func TestErrorTypes(t *testing.T) {
 		{
 			name:          "authentication error 401",
 			statusCode:    http.StatusUnauthorized,
-			errorMessage:  "Authentication failed",
+			errorMessage:  "Unauthorized",
 			wantErrorType: "NotifoxAuthenticationError",
 		},
 		{
@@ -517,7 +523,12 @@ func TestErrorTypes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				w.WriteHeader(tt.statusCode)
-				json.NewEncoder(w).Encode(ErrorResponse{Error: tt.errorMessage})
+				// 401 returns plain text, not JSON
+				if tt.statusCode == http.StatusUnauthorized {
+					w.Write([]byte(tt.errorMessage))
+				} else {
+					json.NewEncoder(w).Encode(ErrorResponse{Error: tt.errorMessage})
+				}
 			}))
 			defer server.Close()
 
