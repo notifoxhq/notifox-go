@@ -237,11 +237,17 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body interfa
 		return result, nil
 	}
 
-	// Try to parse error response
+	// Handle 401 Unauthorized - returns plain text, not JSON
+	if resp.StatusCode == http.StatusUnauthorized {
+		return nil, parseError(resp.StatusCode, string(respBody))
+	}
+
+	// Try to parse error response as JSON
 	var errorResp ErrorResponse
 	if err := json.Unmarshal(respBody, &errorResp); err == nil && errorResp.Error != "" {
 		return nil, parseError(resp.StatusCode, errorResp.Error)
 	}
 
+	// Fallback to raw response body if JSON parsing fails
 	return nil, parseError(resp.StatusCode, string(respBody))
 }

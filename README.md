@@ -108,6 +108,8 @@ func main() {
         switch e := err.(type) {
         case *notifox.NotifoxAuthenticationError:
             fmt.Printf("Authentication failed. Check your API key. Status: %d\n", e.StatusCode)
+        case *notifox.NotifoxInsufficientBalanceError:
+            fmt.Printf("Insufficient balance: %s\n", e.ResponseText)
         case *notifox.NotifoxRateLimitError:
             fmt.Println("Rate limit exceeded. Please wait before sending more alerts.")
         case *notifox.NotifoxAPIError:
@@ -128,8 +130,9 @@ func main() {
 
 - `NotifoxError` - Base error type
 - `NotifoxAuthenticationError` - Authentication failed (401/403)
+- `NotifoxInsufficientBalanceError` - Insufficient balance (402)
 - `NotifoxRateLimitError` - Rate limit exceeded (429)
-- `NotifoxAPIError` - General API errors
+- `NotifoxAPIError` - General API errors (400, 500, etc.)
 - `NotifoxConnectionError` - Network errors
 
 ### Additional Methods
