@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	// Version is the SDK version, used in the User-Agent header.
+	Version = "0.1.5"
 	// DefaultBaseURL is the default base URL for the Notifox API.
 	DefaultBaseURL = "https://api.notifox.com"
 	// DefaultTimeout is the default timeout for API requests.
@@ -201,6 +203,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body interfa
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", "notifox-go/"+Version)
 
 	// Only add Authorization header for endpoints that require it
 	if url != fmt.Sprintf("%s/alert/parts", c.baseURL) {
