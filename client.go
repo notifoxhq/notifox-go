@@ -13,7 +13,7 @@ import (
 
 const (
 	// Version is the SDK version, used in the User-Agent header.
-	Version = "0.1.5"
+	Version = "v0.1.5"
 	// DefaultBaseURL is the default base URL for the Notifox API.
 	DefaultBaseURL = "https://api.notifox.com"
 	// DefaultTimeout is the default timeout for API requests.
