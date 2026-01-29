@@ -31,6 +31,7 @@ type Client struct {
 	timeout    time.Duration
 	maxRetries int
 	httpClient *http.Client
+	UserAgent  string
 }
 
 // ClientOption is a function that configures a Client.
@@ -65,6 +66,16 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 	}
 }
 
+func WithUserAgent(userAgent string) ClientOption {
+	return func(c *Client) {
+		if userAgent == "" {
+			userAgent = "notifox-go/" + Version
+		}
+
+		c.UserAgent = userAgent
+	}
+}
+
 // NewClient creates a new Notifox client with the provided API key.
 // If apiKey is empty, it will attempt to read from the NOTIFOX_API_KEY environment variable.
 func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
@@ -80,6 +91,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
 		},
+		UserAgent: "notifox-go/" + Version,
 	}
 
 	for _, opt := range opts {
@@ -203,7 +215,7 @@ func (c *Client) doRequest(ctx context.Context, method, url string, body interfa
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", "notifox-go/"+Version)
+	req.Header.Set("User-Agent", c.UserAgent)
 
 	// Only add Authorization header for endpoints that require it
 	if url != fmt.Sprintf("%s/alert/parts", c.baseURL) {
