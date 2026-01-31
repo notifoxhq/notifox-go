@@ -3,7 +3,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/notifoxhq/notifox-go.svg)](https://pkg.go.dev/github.com/notifoxhq/notifox-go)
 [![CI](https://github.com/notifoxhq/notifox-go/actions/workflows/ci.yaml/badge.svg)](https://github.com/notifoxhq/notifox-go/actions/workflows/ci.yaml)
 
-Go SDK for the Notifox API. Create a client with `NewClient`, `NewClientWithOptions`, or `NewClientFromEnv`, then send alerts with `SendAlert` and an `AlertRequest`.
+Go SDK for the Notifox API. Create a client with `NewClient()` (key from env, no options) or `NewClientWithOptions` (key via `WithAPIKey` or env, with options). Send alerts with `SendAlert` and an `AlertRequest`. The API key is never a direct argument—use the `WithAPIKey` option or the `NOTIFOX_API_KEY` environment variable.
 
 ## Installation
 
@@ -15,13 +15,13 @@ go get github.com/notifoxhq/notifox-go
 
 ### Basic usage
 
-Create a client from the `NOTIFOX_API_KEY` environment variable (e.g. `NewClientFromEnv()` or `NewClient("")`), then call `SendAlert` with an `AlertRequest`:
+Create a client from the `NOTIFOX_API_KEY` environment variable with `NewClient()`, then call `SendAlert` with an `AlertRequest`:
 
 ```go
 // go get github.com/notifoxhq/notifox-go
 import "github.com/notifoxhq/notifox-go"
 
-client, _ := notifox.NewClientFromEnv()
+client, _ := notifox.NewClient()
 
 client.SendAlert(ctx, notifox.AlertRequest{
     Audience: "oncall-team",
@@ -42,7 +42,7 @@ import (
 )
 
 func main() {
-    client, err := notifox.NewClientFromEnv()
+    client, err := notifox.NewClient()
     if err != nil {
         panic(err)
     }
@@ -69,28 +69,18 @@ func main() {
 
 ### Creating a client
 
-**`NewClient(apiKey string, opts ...ClientOption)`**  
-API key is optional: pass a non-empty key, or `""` to use `NOTIFOX_API_KEY`. Options configure the client.
+**`NewClient()`**  
+No arguments. Creates a client using the API key from the `NOTIFOX_API_KEY` environment variable. No configuration options—use `NewClientWithOptions` if you need to set base URL, timeout, etc.
 
 ```go
-// Key from env, no options
-client, err := notifox.NewClient("")
-
-// Key passed in
-client, err := notifox.NewClient("your_api_key_here")
-
-// Key from env + options
-client, err := notifox.NewClient("", notifox.WithBaseURL("https://api.notifox.com"), notifox.WithTimeout(10*time.Second))
-
-// Key + options
-client, err := notifox.NewClient("your_api_key_here", notifox.WithBaseURL("https://api.notifox.com"))
+client, err := notifox.NewClient()
 if err != nil {
     panic(err)
 }
 ```
 
 **`NewClientWithOptions(opts ...ClientOption)`**  
-API key is optional: use `WithAPIKey(key)` or omit to use `NOTIFOX_API_KEY`.
+Creates a client from options. API key: pass `WithAPIKey(key)` or omit to use `NOTIFOX_API_KEY`. Use this when you need to configure the client (base URL, timeout, retries, etc.).
 
 ```go
 // Key from env
@@ -109,16 +99,13 @@ if err != nil {
 }
 ```
 
-**`NewClientFromEnv(opts ...ClientOption)`**  
-Same as `NewClientWithOptions(opts...)` — key from `NOTIFOX_API_KEY` only.
-
 ### Configuration options
 
-All constructors accept optional `ClientOption` functions:
+`NewClientWithOptions` accepts optional `ClientOption` functions. `NewClient()` takes no options.
 
 | Option | Description |
 |--------|-------------|
-| `WithAPIKey(string)` | Set the API key (optional with `NewClientWithOptions` / `NewClientFromEnv`). |
+| `WithAPIKey(string)` | Set the API key (omit to use `NOTIFOX_API_KEY`). |
 | `WithBaseURL(string)` | Set the API base URL (default: `https://api.notifox.com`). |
 | `WithTimeout(time.Duration)` | Set the HTTP client timeout (default: 30s). |
 | `WithMaxRetries(int)` | Set the number of retries for failed requests (default: 3). |
@@ -128,7 +115,8 @@ All constructors accept optional `ClientOption` functions:
 Example:
 
 ```go
-client, err := notifox.NewClient("your_api_key",
+client, err := notifox.NewClientWithOptions(
+    notifox.WithAPIKey("your_api_key"),
     notifox.WithBaseURL("https://api.notifox.com"),
     notifox.WithTimeout(30*time.Second),
     notifox.WithMaxRetries(3),

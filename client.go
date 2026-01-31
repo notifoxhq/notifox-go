@@ -87,18 +87,16 @@ func WithUserAgent(userAgent string) ClientOption {
 	}
 }
 
-// NewClient creates a new Notifox client. The API key is optional: pass a non-empty key,
-// or pass "" to use the NOTIFOX_API_KEY environment variable. Options (e.g. WithBaseURL,
-// WithTimeout) can be passed to configure the client.
-func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
+// NewClient creates a new Notifox client using the API key from the NOTIFOX_API_KEY
+// environment variable. For configuration (base URL, timeout, etc.) use
+// NewClientWithOptions and the option functions (e.g. WithBaseURL, WithAPIKey).
+func NewClient() (*Client, error) {
+	apiKey := os.Getenv(EnvAPIKey)
 	if apiKey == "" {
-		apiKey = os.Getenv(EnvAPIKey)
-	}
-	if apiKey == "" {
-		return nil, fmt.Errorf("api key is required (provide it directly or set %s environment variable)", EnvAPIKey)
+		return nil, fmt.Errorf("api key is required (set %s environment variable or use NewClientWithOptions with WithAPIKey)", EnvAPIKey)
 	}
 
-	client := &Client{
+	return &Client{
 		apiKey:     apiKey,
 		baseURL:    DefaultBaseURL,
 		timeout:    DefaultTimeout,
@@ -107,13 +105,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 			Timeout: DefaultTimeout,
 		},
 		UserAgent: DefaultUserAgent,
-	}
-
-	for _, opt := range opts {
-		opt(client)
-	}
-
-	return client, nil
+	}, nil
 }
 
 // NewClientWithOptions creates a new Notifox client from options. The API key is optional:
@@ -141,11 +133,6 @@ func NewClientWithOptions(opts ...ClientOption) (*Client, error) {
 	}
 
 	return client, nil
-}
-
-// NewClientFromEnv creates a new Notifox client using the API key from the NOTIFOX_API_KEY environment variable.
-func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
-	return NewClientWithOptions(opts...)
 }
 
 // SendAlert sends an alert to a verified audience.
