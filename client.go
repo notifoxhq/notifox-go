@@ -14,6 +14,8 @@ import (
 const (
 	// Version is the SDK version, used in the User-Agent header.
 	Version = "v0.1.5"
+	// DefaultUserAgent is the default User-Agent string for API requests.
+	DefaultUserAgent = "notifox-go/" + Version
 	// DefaultBaseURL is the default base URL for the Notifox API.
 	DefaultBaseURL = "https://api.notifox.com"
 	// DefaultTimeout is the default timeout for API requests.
@@ -66,19 +68,32 @@ func WithHTTPClient(httpClient *http.Client) ClientOption {
 	}
 }
 
+// WithAPIKey sets the API key for the client. Optional when using NewClientWithOptions;
+// if not set, the key is read from the NOTIFOX_API_KEY environment variable.
+func WithAPIKey(apiKey string) ClientOption {
+	return func(c *Client) {
+		c.apiKey = apiKey
+	}
+}
+
+// WithUserAgent sets the User-Agent header for requests.
 func WithUserAgent(userAgent string) ClientOption {
 	return func(c *Client) {
 		if userAgent == "" {
-			userAgent = "notifox-go/" + Version
+			userAgent = DefaultUserAgent
 		}
 
 		c.UserAgent = userAgent
 	}
 }
 
-// NewClient creates a new Notifox client with the provided API key.
-// If apiKey is empty, it will attempt to read from the NOTIFOX_API_KEY environment variable.
+// NewClient creates a new Notifox client. The API key is optional: pass a non-empty key,
+// or pass "" to use the NOTIFOX_API_KEY environment variable. Options (e.g. WithBaseURL,
+// WithTimeout) can be passed to configure the client.
 func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
+	if apiKey == "" {
+		apiKey = os.Getenv(EnvAPIKey)
+	}
 	if apiKey == "" {
 		return nil, fmt.Errorf("api key is required (provide it directly or set %s environment variable)", EnvAPIKey)
 	}
@@ -91,7 +106,7 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
 		},
-		UserAgent: "notifox-go/" + Version,
+		UserAgent: DefaultUserAgent,
 	}
 
 	for _, opt := range opts {
@@ -101,27 +116,41 @@ func NewClient(apiKey string, opts ...ClientOption) (*Client, error) {
 	return client, nil
 }
 
-// NewClientFromEnv creates a new Notifox client using the API key from the NOTIFOX_API_KEY environment variable.
-func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
-	apiKey := os.Getenv(EnvAPIKey)
-	if apiKey == "" {
-		return nil, fmt.Errorf("api key is required (set %s environment variable)", EnvAPIKey)
+// NewClientWithOptions creates a new Notifox client from options. The API key is optional:
+// pass WithAPIKey(key) to set it, or omit it to use the NOTIFOX_API_KEY environment variable.
+func NewClientWithOptions(opts ...ClientOption) (*Client, error) {
+	client := &Client{
+		baseURL:    DefaultBaseURL,
+		timeout:    DefaultTimeout,
+		maxRetries: DefaultMaxRetries,
+		httpClient: &http.Client{
+			Timeout: DefaultTimeout,
+		},
+		UserAgent: DefaultUserAgent,
 	}
 
-	return NewClient(apiKey, opts...)
+	for _, opt := range opts {
+		opt(client)
+	}
+
+	if client.apiKey == "" {
+		client.apiKey = os.Getenv(EnvAPIKey)
+	}
+	if client.apiKey == "" {
+		return nil, fmt.Errorf("api key is required (set %s environment variable or use notifox.WithAPIKey)", EnvAPIKey)
+	}
+
+	return client, nil
+}
+
+// NewClientFromEnv creates a new Notifox client using the API key from the NOTIFOX_API_KEY environment variable.
+func NewClientFromEnv(opts ...ClientOption) (*Client, error) {
+	return NewClientWithOptions(opts...)
 }
 
 // SendAlert sends an alert to a verified audience.
-func (c *Client) SendAlert(ctx context.Context, audience, alert string) (*AlertResponse, error) {
-	return c.SendAlertWithOptions(ctx, AlertRequest{
-		Audience: audience,
-		Alert:    alert,
-	})
-}
-
-// SendAlertWithOptions sends an alert with additional options.
-// The channel can be set to "sms" or "email".
-func (c *Client) SendAlertWithOptions(ctx context.Context, req AlertRequest) (*AlertResponse, error) {
+// Always use AlertRequest to specify audience, channel (SMS or Email), and alert message.
+func (c *Client) SendAlert(ctx context.Context, req AlertRequest) (*AlertResponse, error) {
 	if req.Audience == "" {
 		return nil, fmt.Errorf("audience cannot be empty")
 	}

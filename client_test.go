@@ -22,7 +22,7 @@ func TestNewClient(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "empty API key",
+			name:      "empty API key and no env",
 			apiKey:    "",
 			wantError: true,
 		},
@@ -30,6 +30,9 @@ func TestNewClient(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.wantError && tt.apiKey == "" {
+				os.Unsetenv(EnvAPIKey)
+			}
 			client, err := NewClient(tt.apiKey)
 			if tt.wantError {
 				if err == nil {
@@ -55,6 +58,20 @@ func TestNewClient(t *testing.T) {
 		})
 	}
 }
+
+func TestNewClientEmptyKeyUsesEnv(t *testing.T) {
+	os.Setenv(EnvAPIKey, "env-api-key")
+	defer os.Unsetenv(EnvAPIKey)
+
+	client, err := NewClient("")
+	if err != nil {
+		t.Fatalf("NewClient(\"\") with env set: %v", err)
+	}
+	if client.apiKey != "env-api-key" {
+		t.Errorf("apiKey = %q, want %q", client.apiKey, "env-api-key")
+	}
+}
+
 
 func TestNewClientFromEnv(t *testing.T) {
 	t.Run("with environment variable", func(t *testing.T) {
@@ -86,7 +103,7 @@ func TestNewClientFromEnv(t *testing.T) {
 	})
 }
 
-func TestNewClientWithOptions(t *testing.T) {
+func TestNewClientAppliesOptions(t *testing.T) {
 	customURL := "https://custom.example.com"
 	customTimeout := 60 * time.Second
 	customRetries := 5
@@ -109,6 +126,54 @@ func TestNewClientWithOptions(t *testing.T) {
 	if client.maxRetries != customRetries {
 		t.Errorf("NewClient() maxRetries = %v, want %v", client.maxRetries, customRetries)
 	}
+}
+
+func TestNewClientWithOptions(t *testing.T) {
+	t.Run("key from option", func(t *testing.T) {
+		client, err := NewClientWithOptions(WithAPIKey("option-key"))
+		if err != nil {
+			t.Fatalf("NewClientWithOptions() unexpected error: %v", err)
+		}
+		if client.apiKey != "option-key" {
+			t.Errorf("apiKey = %q, want %q", client.apiKey, "option-key")
+		}
+	})
+
+	t.Run("key from env when option omitted", func(t *testing.T) {
+		os.Setenv(EnvAPIKey, "env-key")
+		defer os.Unsetenv(EnvAPIKey)
+
+		client, err := NewClientWithOptions()
+		if err != nil {
+			t.Fatalf("NewClientWithOptions() unexpected error: %v", err)
+		}
+		if client.apiKey != "env-key" {
+			t.Errorf("apiKey = %q, want %q", client.apiKey, "env-key")
+		}
+	})
+
+	t.Run("error when no key", func(t *testing.T) {
+		os.Unsetenv(EnvAPIKey)
+
+		_, err := NewClientWithOptions()
+		if err == nil {
+			t.Error("NewClientWithOptions() expected error, got nil")
+		}
+	})
+
+	t.Run("key from option with other options", func(t *testing.T) {
+		customURL := "https://custom.example.com"
+		client, err := NewClientWithOptions(WithAPIKey("my-key"), WithBaseURL(customURL))
+		if err != nil {
+			t.Fatalf("NewClientWithOptions() unexpected error: %v", err)
+		}
+		if client.apiKey != "my-key" {
+			t.Errorf("apiKey = %q, want %q", client.apiKey, "my-key")
+		}
+		if client.baseURL != customURL {
+			t.Errorf("baseURL = %v, want %v", client.baseURL, customURL)
+		}
+	})
 }
 
 func TestSendAlert(t *testing.T) {
@@ -221,7 +286,7 @@ func TestSendAlert(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			resp, err := client.SendAlert(ctx, tt.audience, tt.alert)
+			resp, err := client.SendAlert(ctx, AlertRequest{Audience: tt.audience, Alert: tt.alert})
 
 			if tt.wantError {
 				if err == nil {
@@ -261,7 +326,7 @@ func TestSendAlert(t *testing.T) {
 	}
 }
 
-func TestSendAlertWithOptions(t *testing.T) {
+func TestSendAlertWithChannel(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var req AlertRequest
 		json.NewDecoder(r.Body).Decode(&req)
@@ -294,17 +359,17 @@ func TestSendAlertWithOptions(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	resp, err := client.SendAlertWithOptions(ctx, AlertRequest{
+	resp, err := client.SendAlert(ctx, AlertRequest{
 		Audience: "test-user",
 		Alert:    "Test alert",
-		Channel:  "sms",
+		Channel:  SMS,
 	})
 
 	if err != nil {
-		t.Errorf("SendAlertWithOptions() unexpected error: %v", err)
+		t.Errorf("SendAlert() unexpected error: %v", err)
 	}
 	if resp == nil {
-		t.Fatal("SendAlertWithOptions() returned nil response")
+		t.Fatal("SendAlert() returned nil response")
 	}
 }
 
@@ -435,7 +500,7 @@ func TestRetryLogic(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	resp, err := client.SendAlert(ctx, "test-user", "Test alert")
+	resp, err := client.SendAlert(ctx, AlertRequest{Audience: "test-user", Alert: "Test alert"})
 
 	if err != nil {
 		t.Errorf("SendAlert() unexpected error: %v", err)
@@ -467,7 +532,7 @@ func TestNoRetryOnAuthError(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.SendAlert(ctx, "test-user", "Test alert")
+	_, err = client.SendAlert(ctx, AlertRequest{Audience: "test-user", Alert: "Test alert"})
 
 	if err == nil {
 		t.Error("SendAlert() expected error, got nil")
@@ -548,7 +613,7 @@ func TestErrorTypes(t *testing.T) {
 			}
 
 			ctx := context.Background()
-			_, err = client.SendAlert(ctx, "test-user", "Test alert")
+			_, err = client.SendAlert(ctx, AlertRequest{Audience: "test-user", Alert: "Test alert"})
 
 			if err == nil {
 				t.Fatal("SendAlert() expected error, got nil")
@@ -582,7 +647,7 @@ func TestConnectionError(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
 	defer cancel()
 
-	_, err = client.SendAlert(ctx, "test-user", "Test alert")
+	_, err = client.SendAlert(ctx, AlertRequest{Audience: "test-user", Alert: "Test alert"})
 
 	if err == nil {
 		t.Error("SendAlert() expected error, got nil")
@@ -624,13 +689,13 @@ func TestDefaultChannel(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.SendAlertWithOptions(ctx, AlertRequest{
+	_, err = client.SendAlert(ctx, AlertRequest{
 		Audience: "test-user",
 		Alert:    "Test alert",
 		// Channel not set, should be empty
 	})
 
 	if err != nil {
-		t.Errorf("SendAlertWithOptions() unexpected error: %v", err)
+		t.Errorf("SendAlert() unexpected error: %v", err)
 	}
 }
