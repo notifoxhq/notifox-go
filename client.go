@@ -13,7 +13,7 @@ import (
 
 const (
 	// Version is the SDK version, used in the User-Agent header.
-	Version = "v0.1.5"
+	Version = "v0.1.6"
 	// DefaultUserAgent is the default User-Agent string for API requests.
 	DefaultUserAgent = "notifox-go/" + Version
 	// DefaultBaseURL is the default base URL for the Notifox API.
