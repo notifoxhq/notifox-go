@@ -38,13 +38,14 @@ package main
 import (
     "context"
     "fmt"
+    "log"
     "github.com/notifoxhq/notifox-go"
 )
 
 func main() {
     client, err := notifox.NewClient()
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
 
     ctx := context.Background()
@@ -54,7 +55,7 @@ func main() {
         Alert:    "🚨 Production DB down!",
     })
     if err != nil {
-        panic(err)
+        log.Fatal(err)
     }
 
     fmt.Printf("Alert sent! Message ID: %s\n", resp.MessageID)
@@ -75,7 +76,7 @@ No arguments. Creates a client using the API key from the `NOTIFOX_API_KEY` envi
 ```go
 client, err := notifox.NewClient()
 if err != nil {
-    panic(err)
+    log.Fatal(err)
 }
 ```
 
@@ -95,7 +96,7 @@ client, err := notifox.NewClientWithOptions(
     notifox.WithBaseURL("https://api.notifox.com"),
 )
 if err != nil {
-    panic(err)
+    log.Fatal(err)
 }
 ```
 
@@ -145,7 +146,7 @@ Returns SMS parts, cost, encoding, and character count without sending.
 ```go
 resp, err := client.CalculateParts(ctx, "Your message here")
 if err != nil {
-    panic(err)
+    log.Fatal(err)
 }
 fmt.Printf("Parts: %d, Cost: $%.3f, Encoding: %s\n", resp.Parts, resp.Cost, resp.Encoding)
 ```
